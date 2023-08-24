@@ -25,48 +25,63 @@ async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
-        
-        const serviceColletion= client.db('carDoctor').collection('services');
-        const bookingColletion= client.db('carDoctor').collection('bookings');
 
-        app.get('/services', async(req,res)=>{
+        const serviceColletion = client.db('carDoctor').collection('services');
+        const bookingColletion = client.db('carDoctor').collection('bookings');
+
+        app.get('/services', async (req, res) => {
             const cursor = serviceColletion.find();
-            const result= await cursor.toArray();
+            const result = await cursor.toArray();
             res.send(result);
         })
 
-        app.get('/services/:id', async(req,res)=>{
-           const id = req.params.id;
-           const query = {_id: new ObjectId(id)}
+        app.get('/services/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
             const options = {
                 // Include only the `title` and `imdb` fields in the returned document
-                projection: { title: 1, price: 1, service_id:1, img:1 },
+                projection: { title: 1, price: 1, service_id: 1, img: 1 },
             };
-           const result = await serviceColletion.findOne(query,options)
+            const result = await serviceColletion.findOne(query, options)
             res.send(result);
         })
         // bookings
-       app.get('/bookings', async(req,res)=>{
-        console.log(req.query.email)
-        let query={}
-        if(req.query?.email){
-            query={email: req.query.email}
-        }
-         const result = await bookingColletion.find(query).toArray();
-         res.send(result);
-       })
+        app.get('/bookings', async (req, res) => {
+            // console.log(req.query.email)
+            let query = {}
+            if (req.query?.email) {
+                query = { email: req.query.email }
+            }
+            const result = await bookingColletion.find(query).toArray();
+            res.send(result);
+        })
 
-        app.post('/bookings', async(req,res)=>{
-            const booking=req.body;
+        app.post('/bookings', async (req, res) => {
+            const booking = req.body;
             console.log(booking)
             const result = await bookingColletion.insertOne(booking)
             res.send(result);
         })
-        app.delete('/bookings/:id', async(req,res)=>{
-          const id = req.params.id;
-          const query = {_id: new ObjectId(id)}
-          const result = await bookingColletion.deleteOne(query)
-          res.send(result)
+        //update 
+        app.patch('/bookings/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const updatedBooking = req.body; 
+            console.log(updatedBooking);
+            const updateDoc = {
+                $set: {
+                    status: updatedBooking.status
+                },
+            };
+           const result = await bookingColletion.updateOne(filter,updateDoc);
+           res.send(result);
+        })
+        //delete
+        app.delete('/bookings/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await bookingColletion.deleteOne(query)
+            res.send(result)
         })
 
         // Send a ping to confirm a successful connection
@@ -83,10 +98,10 @@ run().catch(console.dir);
 
 
 
-app.get('/',(req,res)=>{
+app.get('/', (req, res) => {
     res.send('doctor is running')
 })
 
-app.listen(port,()=>{
+app.listen(port, () => {
     console.log(`Car Doctor server is running on port ${port}`)
 })
