@@ -59,9 +59,27 @@ async function run() {
 
         //services routes
         app.get('/services', async (req, res) => {
-            const cursor = serviceColletion.find();
-            const result = await cursor.toArray();
-            res.send(result);
+            const sort = req.query.sort;
+            const search = req.query.search;
+            //console.log(search)
+            //const query={}
+            //gte -> greater than and equal, lt-> less than, gt-> greater than
+            //const query ={price :{ $gte: 50, $lte:150}};
+            const query = {title: {$regex: search, $options: 'i'}}
+            const options = {
+                //sort returned documents in descending order by price
+                sort:{
+                    'price' : sort === 'asc' ? 1 : -1
+                },
+            };
+            if(sort && search){
+                const cursor = serviceColletion.find(query, options);
+                const result = await cursor.toArray();
+                res.send(result);
+            }else{
+                const result = await serviceColletion.find().toArray();
+                res.send(result);
+            }
         })
 
         app.get('/services/:id', async (req, res) => {
